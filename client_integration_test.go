@@ -141,6 +141,18 @@ func testGet(t *testing.T, c *wgctrl.Client, d *wgtypes.Device) {
 	}
 }
 
+func ipsToAllowedIPConfig(ips []net.IPNet) []wgtypes.AllowedIPConfig {
+	result := make([]wgtypes.AllowedIPConfig, len(ips))
+
+	for i := range ips {
+		result[i] = wgtypes.AllowedIPConfig{
+			IPNet: ips[i],
+		}
+	}
+
+	return result
+}
+
 func testConfigure(t *testing.T, c *wgctrl.Client, d *wgtypes.Device) {
 	var (
 		port = 8888
@@ -162,7 +174,7 @@ func testConfigure(t *testing.T, c *wgctrl.Client, d *wgtypes.Device) {
 		Peers: []wgtypes.PeerConfig{{
 			PublicKey:         peerKey,
 			ReplaceAllowedIPs: true,
-			AllowedIPs:        ips,
+			AllowedIPs:        ipsToAllowedIPConfig(ips),
 		}},
 	}
 
@@ -245,7 +257,7 @@ func testConfigureManyIPs(t *testing.T, c *wgctrl.Client, d *wgtypes.Device) {
 		peers = append(peers, wgtypes.PeerConfig{
 			PublicKey:         wgtest.MustPublicKey(),
 			ReplaceAllowedIPs: true,
-			AllowedIPs:        ips,
+			AllowedIPs:        ipsToAllowedIPConfig(ips),
 		})
 
 		countIPs += len(ips)
@@ -295,7 +307,7 @@ func testConfigureManyPeers(t *testing.T, c *wgctrl.Client, d *wgtypes.Device) {
 				Port: 1111,
 			},
 			PersistentKeepaliveInterval: &dur,
-			AllowedIPs:                  ips,
+			AllowedIPs:                  ipsToAllowedIPConfig(ips),
 		})
 	}
 
@@ -369,7 +381,6 @@ func testConfigurePeersUpdateOnly(t *testing.T, c *wgctrl.Client, d *wgtypes.Dev
 			// TODO(stv0g): remove as soon as the FreeBSD kernel module supports it
 			t.Skip("FreeBSD kernel devices do not support UpdateOnly flag")
 		}
-
 
 		t.Fatalf("failed to configure second time on %q: %v", d.Name, err)
 	}

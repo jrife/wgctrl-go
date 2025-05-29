@@ -179,7 +179,10 @@ func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 		}
 	}
 
-	m := unparseConfig(cfg)
+	m, err := unparseConfig(cfg)
+	if err != nil {
+		return err
+	}
 	mem, sz, err := nv.Marshal(m)
 	if err != nil {
 		return err
@@ -459,7 +462,7 @@ func parseDevice(data []byte) (*wgtypes.Device, error) {
 }
 
 // unparsePeerConfig encodes a PeerConfig to a name-value list (nvlist).
-func unparsePeerConfig(cfg wgtypes.PeerConfig) nv.List {
+func unparsePeerConfig(cfg wgtypes.PeerConfig) (nv.List, error) {
 	m := nv.List{}
 
 	m["public-key"] = cfg.PublicKey[:]
@@ -488,17 +491,21 @@ func unparsePeerConfig(cfg wgtypes.PeerConfig) nv.List {
 		aips := []nv.List{}
 
 		for _, aip := range cfg.AllowedIPs {
-			aips = append(aips, unparseAllowedIP(aip))
+			if aip.Remove {
+				return nv.List{}, fmt.Errorf("allowed ips remove not supported: %w", os.ErrInvalid)
+			}
+
+			aips = append(aips, unparseAllowedIP(aip.IPNet))
 		}
 
 		m["allowed-ips"] = aips
 	}
 
-	return m
+	return m, nil
 }
 
 // unparseDevice encodes the device configuration as a FreeBSD name-value list (nvlist).
-func unparseConfig(cfg wgtypes.Config) nv.List {
+func unparseConfig(cfg wgtypes.Config) (nv.List, error) {
 	m := nv.List{}
 
 	if v := cfg.PrivateKey; v != nil {
@@ -521,12 +528,15 @@ func unparseConfig(cfg wgtypes.Config) nv.List {
 		peers := []nv.List{}
 
 		for _, p := range v {
-			peer := unparsePeerConfig(p)
+			peer, err := unparsePeerConfig(p)
+			if err != nil {
+				return nv.List{}, err
+			}
 			peers = append(peers, peer)
 		}
 
 		m["peers"] = peers
 	}
 
-	return m
+	return m, nil
 }
