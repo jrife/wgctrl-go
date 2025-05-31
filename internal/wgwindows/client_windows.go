@@ -310,3 +310,7 @@ func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 	interfaze, size := b.Interface()
 	return windows.DeviceIoControl(handle, ioctl.IoctlSet, nil, 0, (*byte)(unsafe.Pointer(interfaze)), size, &size, nil)
 }
+
+func (c *Client) SupportsAllowedIPRemove(name string) (bool, error) {
+	return false, nil
+}

@@ -217,6 +217,10 @@ func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 	return nil
 }
 
+func (c *Client) SupportsAllowedIPRemove(name string) (bool, error) {
+	return false, nil
+}
+
 // deviceName converts an interface name string to the format required to pass
 // with wgh.WGGetServ.
 func deviceName(name string) ([16]byte, error) {
